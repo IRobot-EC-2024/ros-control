@@ -143,7 +143,7 @@ cd sh
 colcon build
 source install/setup.bash
 
-ros2 launch control_node control_node
+ros2 launch control_node control_node.launch.py
 ```
 
 ## Useful commands
