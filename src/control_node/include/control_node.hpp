@@ -10,7 +10,8 @@ class ControlNode : public rclcpp::Node {
   ControlNode(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
 
  private:
-  // ---params---
+  /** PARAMETERS **/
+  /** hardware_settings.yaml **/
   int param_hardware_settings_usb_vid_;
   int param_hardware_settings_usb_pid_;
   int param_hardware_settings_usb_read_endpoint_;
