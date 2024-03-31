@@ -1,0 +1,15 @@
+{
+    "python.autoComplete.extraPaths": [
+        "/opt/ros/galactic/lib/python3.8/site-packages",
+        "/opt/intel/openvino_2022.3.0/python/python3.8",
+        "/opt/intel/openvino_2022.3.0/python/python3",
+        ""
+    ],
+    "python.analysis.extraPaths": [
+        "/opt/ros/galactic/lib/python3.8/site-packages",
+        "/opt/intel/openvino_2022.3.0/python/python3.8",
+        "/opt/intel/openvino_2022.3.0/python/python3",
+        ""
+    ],
+    "cmake.sourceDirectory": "${workspaceFolder}/src/control_node"
+}
