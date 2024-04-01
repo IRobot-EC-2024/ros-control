@@ -55,16 +55,11 @@ void Can::Recv() noexcept {
     return;
   }
 
-  auto receipient_device = this->device_list_.find(frame.can_id);
-  if (receipient_device != this->device_list_.end()) {
-    receipient_device->second->RxCallback(std::make_unique<struct can_frame>(frame));
+  {
+    // 将接收到的数据包放入消息队列
+    std::lock_guard<std::mutex> lock(this->queue_synchronizer_);
+    this->message_queue_.push_back(std::make_unique<struct can_frame>(frame));
   }
-
-  // {
-  //   // 将接收到的数据包放入消息队列
-  //   std::lock_guard<std::mutex> lock(this->queue_synchronizer_);
-  //   this->message_queue_.push_back(std::make_unique<struct can_frame>(frame));
-  // }
 }
 
 /**
@@ -130,7 +125,7 @@ Can::Can(const std::string &dev) : device_name_(dev), is_opened_(false) {
   bind(this->socket_fd_, (struct sockaddr *)&this->addr_, sizeof(this->addr_));
 
   // 启动消息发布线程
-  // this->message_publish_thread_ = std::thread(&Can::MessagePublishThread, this);
+  this->message_publish_thread_ = std::thread(&Can::MessagePublishThread, this);
 
   this->is_opened_ = true;
 }
@@ -138,7 +133,7 @@ Can::Can(const std::string &dev) : device_name_(dev), is_opened_(false) {
 Can::~Can() {
   close(this->socket_fd_);
   this->is_opened_ = false;
-  // this->message_publish_thread_.join();
+  this->message_publish_thread_.join();
 }
 
 /**
