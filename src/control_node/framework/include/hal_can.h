@@ -12,7 +12,9 @@
 
 #include <array>
 #include <cstdint>
+#include <deque>
 #include <memory>
+#include <mutex>
 #include <string>
 #include <unordered_map>
 
@@ -64,23 +66,28 @@ class Can {
   Can(const Can &) = delete;
   Can &operator=(const Can &) = delete;
 
-  void Recv();
+  void Recv() noexcept;
   void Send(uint id, u_char *buf, u_char dlc);
+  uint queued();
 
  private:
+  void MessagePublishThread();
   void RegisterDevice(CanDeviceBase &device);
   void UnregisterDevice(CanDeviceBase &device);
 
   std::unordered_map<uint32_t, CanDeviceBase *> device_list_;
+  std::deque<std::unique_ptr<struct can_frame>> message_queue_;
+  std::thread message_publish_thread_;
+  std::mutex queue_synchronizer_;
 
   int socket_fd_;
   struct sockaddr_can addr_;
   struct ifreq interface_request_;
-
+  struct can_filter filter_;
   struct can_frame tx_buf_;
-  int can_id_;
+  std::string device_name_;
 
-  modules::ThreadPool thread_pool_{16};
+  bool is_opened_;
 };
 
 }  // namespace irobot_ec::hal

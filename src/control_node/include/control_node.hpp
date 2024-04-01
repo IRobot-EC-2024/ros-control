@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <rclcpp/rclcpp.hpp>
+#include <thread>
 
 class ControlNode : public rclcpp::Node {
  public:
@@ -18,6 +19,9 @@ class ControlNode : public rclcpp::Node {
   int param_hardware_settings_usb_write_endpoint_;
   int param_hardware_settings_usb_read_timeout_;
   int param_hardware_settings_usb_write_timeout_;
+
+  std::thread can_polling_thread_;
+  std::thread control_thread_;
 };
 
 #endif

@@ -11,7 +11,7 @@
 
 #include "typedefs.h"
 
-namespace irobot_ec::modules::algorithm::PID {
+namespace irobot_ec::modules::algorithm {
 
 enum class PIDType {
   kPosition,
@@ -79,7 +79,7 @@ class RingPID : public PID {
 
 };  // class RingPID
 
-}  // namespace irobot_ec::modules::algorithm::PID
+}  // namespace irobot_ec::modules::algorithm
 
 #endif  // EC_LIB_MODULES_ALGORITHM_PID_H
 

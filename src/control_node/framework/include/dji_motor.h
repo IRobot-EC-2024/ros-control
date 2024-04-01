@@ -28,13 +28,13 @@ class DjiMotorBase : public irobot_ec::hal::CanDeviceBase {
 
   /* 取值函数 */
   [[nodiscard]] uint16_t encoder() const;
-  [[nodiscard]] uint16_t rpm() const;
-  [[nodiscard]] uint16_t current() const;
-  [[nodiscard]] uint16_t temperature() const;
+  [[nodiscard]] int16_t rpm() const;
+  [[nodiscard]] int16_t current() const;
+  [[nodiscard]] uint8_t temperature() const;
   /***********/
 
  protected:
-  DjiMotorBase(uint8_t buffer_index, hal::Can *hcan, uint16_t id);
+  DjiMotorBase(uint8_t buffer_index, hal::Can &hcan, uint16_t id);
 
   template <int16_t current_bound, uint8_t buffer_index>
   void SetCurrentTemplate(int16_t current);
@@ -42,10 +42,10 @@ class DjiMotorBase : public irobot_ec::hal::CanDeviceBase {
 
   uint16_t id_{};  // 电机ID
   /**   FEEDBACK DATA   **/
-  uint16_t encoder_{};      // 电机编码器值
-  uint16_t rpm_{};          // 电机转速
-  uint16_t current_{};      // 电机实际电流
-  uint16_t temperature_{};  // 电机温度
+  uint16_t encoder_{};     // 电机编码器值
+  int16_t rpm_{};          // 电机转速
+  int16_t current_{};      // 电机实际电流
+  uint8_t temperature_{};  // 电机温度
   /***********************/
 
   /**
@@ -71,7 +71,7 @@ class DjiMotorBase : public irobot_ec::hal::CanDeviceBase {
 class GM6020 final : public DjiMotorBase {
  public:
   GM6020() = delete;
-  GM6020(hal::Can *hcan, uint16_t id);
+  GM6020(hal::Can &hcan, uint16_t id);
 
   // no copy constructor
   GM6020(const GM6020 &) = delete;
@@ -91,7 +91,7 @@ class GM6020 final : public DjiMotorBase {
 class M2006 final : public DjiMotorBase {
  public:
   M2006() = delete;
-  M2006(hal::Can *hcan, uint16_t id);
+  M2006(hal::Can &hcan, uint16_t id);
 
   // no copy constructor
   M2006(const M2006 &) = delete;
@@ -102,7 +102,7 @@ class M2006 final : public DjiMotorBase {
 
 /**
  * @brief DJI M3508电机/C620电调
- * @note 反馈报文stdID:     0x201 + ID
+ * @note 反馈报文stdID:     0x200 + ID
  * @note 控制报文stdID:     0x200(1234), 0x1ff(5678)
  * @note 电流范围:         -16384 ~ 16384(-20A ~ 20A), big-endian
  * @note STD, DATA, DLC=8
@@ -111,7 +111,7 @@ class M2006 final : public DjiMotorBase {
 class M3508 final : public DjiMotorBase {
  public:
   M3508() = delete;
-  M3508(hal::Can *hcan, uint16_t id);
+  M3508(hal::Can &hcan, uint16_t id);
 
   // no copy constructor
   M3508(const M3508 &) = delete;

@@ -128,7 +128,7 @@ can 反馈报文 id = 200 + index
 #define AMMOR 0x201
 #define AMMOL 0x202
 #define ROTOR 0x203
-#define YAW   0x205 
+#define YAW   0x205
 #define PITCH 0x206
 ```
 

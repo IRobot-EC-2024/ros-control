@@ -6,6 +6,7 @@
 
 #include "dji_motor.h"
 
+#include <iostream>
 #include <stdexcept>
 
 #include "exception.h"
@@ -37,8 +38,8 @@ std::list<DjiMotorBase *> DjiMotorBase::motor_list_{};
  * @param hcan  指向CAN总线对象的指针
  * @param id    电机ID
  */
-DjiMotorBase::DjiMotorBase(uint8_t buffer_index, hal::Can *hcan, uint16_t rx_std_id)
-    : hal::CanDeviceBase(hcan, rx_std_id) {
+DjiMotorBase::DjiMotorBase(uint8_t buffer_index, hal::Can &hcan, uint16_t rx_std_id)
+    : hal::CanDeviceBase(&hcan, rx_std_id) {
   // 构造的电机对象对应电机型号的发送缓冲区还未创建，就创建一个
   if (DjiMotorBase::tx_bufs_[buffer_index] == nullptr) {
     DjiMotorBase::tx_bufs_[buffer_index] = new std::unordered_map<hal::Can *, std::array<uint8_t, 18>>;
@@ -80,7 +81,7 @@ void DjiMotorBase::RxCallback(std::unique_ptr<struct can_frame> msg) {
   this->encoder_ = (msg->data[0] << 8) | msg->data[1];
   this->rpm_ = (msg->data[2] << 8) | msg->data[3];
   this->current_ = (msg->data[4] << 8) | msg->data[5];
-  this->temperature_ = (msg->data[6] << 8) | msg->data[7];
+  this->temperature_ = msg->data[6];
 }
 
 /**
@@ -93,19 +94,19 @@ uint16_t DjiMotorBase::encoder() const { return this->encoder_; }
  * @brief   获取电机的转速
  * @return  RPM(rad/s)
  */
-uint16_t DjiMotorBase::rpm() const { return this->rpm_; }
+int16_t DjiMotorBase::rpm() const { return this->rpm_; }
 
 /**
  * @brief   获取电机的实际电流
  * @return  电流值(无单位)
  */
-uint16_t DjiMotorBase::current() const { return this->current_; }
+int16_t DjiMotorBase::current() const { return this->current_; }
 
 /**
  * @brief   获取电机的温度
  * @return  温度(°C)
  */
-uint16_t DjiMotorBase::temperature() const { return this->temperature_; }
+uint8_t DjiMotorBase::temperature() const { return this->temperature_; }
 
 /**
  * @brief  设置电机的输出电流，本模板函数留给子类实例化，设定电流范围
@@ -143,7 +144,7 @@ void DjiMotorBase::SetCurrentTemplate(int16_t current) {
  * @param hcan  指向CAN总线对象的指针
  * @param id    电机ID(1~7)
  */
-GM6020::GM6020(hal::Can *hcan, uint16_t id) : DjiMotorBase(0, hcan, 0x204 + id) {
+GM6020::GM6020(hal::Can &hcan, uint16_t id) : DjiMotorBase(0, hcan, 0x204 + id) {
   if (1 <= id && id <= 4) {
     this->id_ = id;
     this->SetTxStdId(0x1ff);
@@ -171,7 +172,7 @@ void GM6020::SetCurrent(int16_t current) { DjiMotorBase::SetCurrentTemplate<3000
  * @param hcan  指向CAN总线对象的指针
  * @param id    电机ID(1~8)
  */
-M2006::M2006(hal::Can *hcan, uint16_t id) : DjiMotorBase(1, hcan, 0x200 + id) {
+M2006::M2006(hal::Can &hcan, uint16_t id) : DjiMotorBase(1, hcan, 0x200 + id) {
   if (1 <= id && id <= 4) {
     this->id_ = id;
     this->SetTxStdId(0x200);
@@ -199,7 +200,7 @@ void M2006::SetCurrent(int16_t current) { DjiMotorBase::SetCurrentTemplate<10000
  * @param can_bus   指向CAN总线对象的指针
  * @param id        电机ID(1~8)
  */
-M3508::M3508(hal::Can *hcan, uint16_t id) : DjiMotorBase(2, hcan, 0x201 + id) {
+M3508::M3508(hal::Can &hcan, uint16_t id) : DjiMotorBase(2, hcan, 0x200 + id) {
   if (1 <= id && id <= 4) {
     this->id_ = id;
     this->SetTxStdId(0x200);

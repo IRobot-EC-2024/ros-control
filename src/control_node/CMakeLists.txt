@@ -26,6 +26,7 @@ find_package(rclcpp_components REQUIRED)
 file(GLOB_RECURSE SOURCES "src/*.cc")
 add_executable(control_node ${SOURCES})
 target_include_directories(control_node PUBLIC include)
+target_link_libraries(control_node framework)
 
 ament_target_dependencies(control_node
   rclcpp

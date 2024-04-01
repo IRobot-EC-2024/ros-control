@@ -2,23 +2,8 @@
 #include "hal_can.h"
 
 #include <cstring>
+#include <iostream>
 #include <stdexcept>
-
-constexpr const char *GIMBAL_CAN = "can1";
-constexpr uint16_t AMMOR = 0x201;
-constexpr uint16_t AMMOL = 0x202;
-constexpr uint16_t ROTOR = 0x203;
-constexpr uint16_t YAW = 0x205;
-constexpr uint16_t PITCH = 0x206;
-constexpr uint16_t GIMBAL_COMMAND = 0x1FF;
-constexpr uint16_t SHOOT_COMMAND = 0x200;
-
-constexpr const char *CHASSIS_CAN = "can0";
-constexpr uint16_t WHEEL1 = 0x201;
-constexpr uint16_t WHEEL2 = 0x202;
-constexpr uint16_t WHEEL3 = 0x203;
-constexpr uint16_t WHEEL4 = 0x204;
-constexpr uint16_t CHASSIS_COMMAND = 0x200;
 
 namespace irobot_ec::hal {
 
@@ -27,7 +12,9 @@ namespace irobot_ec::hal {
 /****************************/
 CanDeviceBase::~CanDeviceBase() { this->hcan_->UnregisterDevice(*this); }
 
-CanDeviceBase::CanDeviceBase(Can *hcan, uint32_t rx_std_id) { this->hcan_->RegisterDevice(*this); }
+CanDeviceBase::CanDeviceBase(Can *hcan, uint32_t rx_std_id) : hcan_(hcan), rx_std_id_(rx_std_id) {
+  this->hcan_->RegisterDevice(*this);
+}
 
 Can &CanDeviceBase::GetCanBus() { return *this->hcan_; }
 
@@ -54,37 +41,73 @@ void Can::Send(uint id, u_char *buf, u_char dlc) {
 
   for (int i = 0; i < (int)dlc; i++) this->tx_buf_.data[i] = buf[i];
 
-  int t = write(this->socket_fd_, &this->tx_buf_, sizeof(this->tx_buf_));
-  if (t >= 0) {
-    throw std::runtime_error("can send error");
+  while (write(this->socket_fd_, &this->tx_buf_, sizeof(this->tx_buf_)) == -1) {
   }
 }
 
 /**
  *  @brief    接收数据，根据id区分数据包，调用对应设备的回调函数
  */
-void Can::Recv() {
+void Can::Recv() noexcept {
   struct can_frame frame;
-  int t = write(this->socket_fd_, &frame, sizeof(frame));
+  int t = read(this->socket_fd_, &frame, sizeof(frame));
   if (t <= 0) {
-    throw std::runtime_error("can receive error");
+    return;
   }
 
   auto receipient_device = this->device_list_.find(frame.can_id);
-
   if (receipient_device != this->device_list_.end()) {
     receipient_device->second->RxCallback(std::make_unique<struct can_frame>(frame));
+  }
+
+  // {
+  //   // 将接收到的数据包放入消息队列
+  //   std::lock_guard<std::mutex> lock(this->queue_synchronizer_);
+  //   this->message_queue_.push_back(std::make_unique<struct can_frame>(frame));
+  // }
+}
+
+/**
+ * @brief     消息发布线程
+ */
+void Can::MessagePublishThread() {
+  std::unique_ptr<struct can_frame> msg;
+  while (true) {
+    {
+      std::lock_guard<std::mutex> lock(this->queue_synchronizer_);
+      // 消息队列为空时，继续等待
+      if (this->message_queue_.empty()) {
+        continue;
+      }
+      // 消息队列数量超过50时，清空队列并打印错误信息
+      if (this->message_queue_.size() > 50) {
+        std::cerr << this->device_name_ << " message queue overflow" << std::endl;
+        this->message_queue_.clear();
+      }
+      msg = std::move(this->message_queue_.front());
+      this->message_queue_.pop_front();
+    }
+
+    // Can对象析构时，退出线程
+    if (!this->is_opened_) {
+      break;
+    }
+    // 根据报文ID找到对应的设备，调用回调函数
+    auto receipient_device = this->device_list_.find(msg->can_id);
+    if (receipient_device != this->device_list_.end()) {
+      receipient_device->second->RxCallback(std::move(msg));
+    }
   }
 }
 
 /**
  * @param dev can设备名, 例如"can0", "can1"，具体可以通过ifconfig命令查看
  */
-Can::Can(const std::string &dev) {
+Can::Can(const std::string &dev) : device_name_(dev), is_opened_(false) {
   this->socket_fd_ = socket(PF_CAN, SOCK_RAW, CAN_RAW);
 
   if (this->socket_fd_ < 0) {
-    throw std::runtime_error("can socket init error");
+    throw std::runtime_error(this->device_name_ + " open error");
   }
 
   // 配置 Socket CAN 为阻塞IO
@@ -98,11 +121,25 @@ Can::Can(const std::string &dev) {
   this->addr_.can_family = AF_CAN;
   this->addr_.can_ifindex = this->interface_request_.ifr_ifindex;
 
+  // 配置过滤器，接收所有数据帧
+  this->filter_.can_id = 0x0;
+  this->filter_.can_mask = 0x0;
+  setsockopt(this->socket_fd_, SOL_CAN_RAW, CAN_RAW_FILTER, &this->filter_, sizeof(this->filter_));
+
   // 将套接字与can设备绑定
   bind(this->socket_fd_, (struct sockaddr *)&this->addr_, sizeof(this->addr_));
+
+  // 启动消息发布线程
+  // this->message_publish_thread_ = std::thread(&Can::MessagePublishThread, this);
+
+  this->is_opened_ = true;
 }
 
-Can::~Can() { close(this->socket_fd_); }
+Can::~Can() {
+  close(this->socket_fd_);
+  this->is_opened_ = false;
+  // this->message_publish_thread_.join();
+}
 
 /**
  * @brief 向这个Can总线对象上注册一个设备
@@ -120,5 +157,11 @@ void Can::UnregisterDevice(CanDeviceBase &device) {
     this->device_list_.erase(dev);
   }
 }
+
+/**
+ * @brief  返回消息队列中的消息数量
+ * @return 消息数量
+ */
+uint Can::queued() { return this->message_queue_.size(); }
 
 }  // namespace irobot_ec::hal

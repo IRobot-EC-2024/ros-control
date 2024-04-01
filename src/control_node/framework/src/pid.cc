@@ -10,7 +10,7 @@
 
 #include "utils.hpp"
 
-namespace irobot_ec::modules::algorithm::PID {
+namespace irobot_ec::modules::algorithm {
 
 using irobot_ec::modules::algorithm::utils::absConstrain;
 
@@ -141,4 +141,4 @@ void RingPID::handleZeroCrossing() {
   }
 }
 
-}  // namespace irobot_ec::modules::algorithm::PID
+}  // namespace irobot_ec::modules::algorithm
