@@ -36,7 +36,7 @@ sudo ./listdevs
 
 [related links]( https://blog.csdn.net/jiacong_wang/article/details/106720863?spm=1001.2014.3001.5502)
 
-to setup the realtime kernel, please check this [article]( https://zhuanlan.zhihu.com/p/675155576)
+to setup the realtime kernel, please check this [article](https://zhuanlan.zhihu.com/p/675155576)
 
 ## 检查硬件
 
@@ -136,8 +136,7 @@ can 反馈报文 id = 200 + index
 
 ```shell
 # [可选]清理构建残留
-cd sh
-./clean.sh
+./scripts/clean.sh
 ###########
 
 colcon build
