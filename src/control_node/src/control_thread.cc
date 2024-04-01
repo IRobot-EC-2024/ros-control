@@ -1,6 +1,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <rclcpp/rclcpp.hpp>
 #include <thread>
 
 #include "dji_motor.h"
@@ -21,8 +22,16 @@ GM6020 *gimbal_pitch, *gimbal_yaw;
 M3508 *shoot_l, *shoot_r;
 M3508 *lf, *rf, *lb, *rb;
 M2006 *loader;
+Mecanum chassis_solver(0.35f, 0.35f);
 
-void ChassisLoop() {}
+void ChassisLoop() {
+  chassis_solver.Calculate(0.f, 0.f, -1.5f);
+  lf->SetCurrent(-chassis_solver.v_lf() * 1000);
+  rf->SetCurrent(chassis_solver.v_rf() * 1000);
+  lb->SetCurrent(-chassis_solver.v_lb() * 1000);
+  rb->SetCurrent(chassis_solver.v_rb() * 1000);
+  DjiMotorBase::SendCommand();
+}
 
 void GimbalLoop() {}
 
@@ -37,8 +46,8 @@ void ControlThread() {
   lb = new M3508(chassis_can, 3);
   rb = new M3508(chassis_can, 4);
 
-  while (true) {
-    std::this_thread::sleep_for(500us);
+  while (rclcpp::ok()) {
+    std::this_thread::sleep_for(1ms);
     ChassisLoop();
     GimbalLoop();
   }

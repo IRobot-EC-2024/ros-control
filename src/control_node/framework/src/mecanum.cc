@@ -11,7 +11,8 @@ namespace irobot_ec::modules::algorithm {
  * @param wheel_base    轮子间距
  * @param wheel_track   轮子轴距
  */
-Mecanum::Mecanum(fp32 wheel_base, fp32 wheel_track) : wheel_base_(wheel_base), wheel_track_(wheel_track), speeds_{0} {}
+Mecanum::Mecanum(fp32 wheel_base, fp32 wheel_track)
+    : wheel_base_(wheel_base / 2.f), wheel_track_(wheel_track / 2.f), speeds_{0} {}
 
 /**
  * @brief 计算麦轮底盘的四个轮子的速度
