@@ -1,6 +1,7 @@
 
 #include <chrono>
 #include <iostream>
+#include <memory>
 #include <rclcpp/rclcpp.hpp>
 #include <thread>
 
@@ -15,15 +16,18 @@ using namespace irobot_ec::components::motor;
 using irobot_ec::modules::algorithm::Mecanum;
 using irobot_ec::modules::algorithm::PID;
 
-extern Can chassis_can;
-extern Can gimbal_can;
+extern std::shared_ptr<Can> chassis_can;
+extern std::shared_ptr<Can> gimbal_can;
 
-GM6020 *gimbal_pitch, *gimbal_yaw;
-M3508 *shoot_l, *shoot_r;
-M3508 *lf, *rf, *lb, *rb;
-M2006 *loader;
+std::shared_ptr<GM6020> gimbal_pitch, gimbal_yaw;
+std::shared_ptr<M3508> shoot_l, shoot_r;
+std::shared_ptr<M3508> lf, rf, lb, rb;
+std::shared_ptr<M2006> loader;
 Mecanum chassis_solver(0.35f, 0.35f);
 
+/**
+ * @brief    底盘控制循环
+ */
 void ChassisLoop() {
   chassis_solver.Calculate(0.f, 0.f, -1.5f);
   lf->SetCurrent(-chassis_solver.v_lf() * 1000);
@@ -33,18 +37,26 @@ void ChassisLoop() {
   DjiMotorBase::SendCommand();
 }
 
+/**
+ * @brief    云台控制循环
+ */
 void GimbalLoop() {}
 
+/**
+ * @brief    控制线程
+ * @note     该线程负责底盘和云台的控制，控制逻辑在ChassisLoop和GimbalLoop两个函数里
+ */
 void ControlThread() {
-  gimbal_pitch = new GM6020(gimbal_can, 2);
-  gimbal_yaw = new GM6020(gimbal_can, 1);
-  shoot_l = new M3508(gimbal_can, 2);
-  shoot_r = new M3508(gimbal_can, 1);
-  loader = new M2006(gimbal_can, 3);
-  lf = new M3508(chassis_can, 2);
-  rf = new M3508(chassis_can, 1);
-  lb = new M3508(chassis_can, 3);
-  rb = new M3508(chassis_can, 4);
+  // 初始化电机对象
+  gimbal_pitch = std::make_shared<GM6020>(*gimbal_can, 2);
+  gimbal_yaw = std::make_shared<GM6020>(*gimbal_can, 1);
+  shoot_l = std::make_shared<M3508>(*gimbal_can, 2);
+  shoot_r = std::make_shared<M3508>(*gimbal_can, 1);
+  loader = std::make_shared<M2006>(*gimbal_can, 3);
+  lf = std::make_shared<M3508>(*chassis_can, 2);
+  rf = std::make_shared<M3508>(*chassis_can, 1);
+  lb = std::make_shared<M3508>(*chassis_can, 3);
+  rb = std::make_shared<M3508>(*chassis_can, 4);
 
   while (rclcpp::ok()) {
     std::this_thread::sleep_for(1ms);

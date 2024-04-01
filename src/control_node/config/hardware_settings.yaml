@@ -1,5 +1,7 @@
 control_node:
   ros__parameters:
+    can_chassis_dev: "can0"
+    can_gimbal_dev: "can1"
     usb_vid: 0x0483
     usb_pid: 0x5740
     usb_read_endpoint: 0x81
