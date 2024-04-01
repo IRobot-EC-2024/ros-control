@@ -13,10 +13,14 @@
  * @note     这里没有控制逻辑，读取完参数之后运行交给各个线程处理
  */
 class ControlNode : public rclcpp::Node {
+  friend int main(int argc, char *argv[]);
+
  public:
   ControlNode(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
 
  private:
+  void KillThreads();
+
   /** 以下都是在config/*.yaml中定义的参数 **/
   /** hardware_settings.yaml **/
   int param_hardware_settings_usb_vid_;
@@ -29,6 +33,7 @@ class ControlNode : public rclcpp::Node {
   std::string param_hardware_settings_can_gimbal_dev_;
 
   std::thread can_polling_thread_;
+  std::thread usbcdc_polling_thread_;
   std::thread control_thread_;
 };
 

@@ -29,11 +29,11 @@ Mecanum chassis_solver(0.35f, 0.35f);
  * @brief    底盘控制循环
  */
 void ChassisLoop() {
-  chassis_solver.Calculate(0.f, 0.f, -1.5f);
-  lf->SetCurrent(-chassis_solver.v_lf() * 1000);
-  rf->SetCurrent(chassis_solver.v_rf() * 1000);
-  lb->SetCurrent(-chassis_solver.v_lb() * 1000);
-  rb->SetCurrent(chassis_solver.v_rb() * 1000);
+  chassis_solver.Calculate(0.f, 1.f, 0.f);
+  lf->SetCurrent(chassis_solver.v_lf() * 1000);
+  rf->SetCurrent(-chassis_solver.v_rf() * 1000);
+  lb->SetCurrent(chassis_solver.v_lb() * 1000);
+  rb->SetCurrent(-chassis_solver.v_rb() * 1000);
   DjiMotorBase::SendCommand();
 }
 
