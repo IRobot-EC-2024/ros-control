@@ -22,7 +22,7 @@ class ControlNode : public rclcpp::Node {
   void KillThreads();
 
   /** 以下都是在config/*.yaml中定义的参数 **/
-  /** hardware_settings.yaml **/
+  /** <hardware_settings.yaml> **/
   int param_hardware_settings_usb_vid_;
   int param_hardware_settings_usb_pid_;
   int param_hardware_settings_usb_read_endpoint_;
@@ -31,6 +31,7 @@ class ControlNode : public rclcpp::Node {
   int param_hardware_settings_usb_write_timeout_;
   std::string param_hardware_settings_can_chassis_dev_;
   std::string param_hardware_settings_can_gimbal_dev_;
+  /** </hardware_settings.yaml> **/
 
   std::thread can_polling_thread_;
   std::thread usbcdc_polling_thread_;

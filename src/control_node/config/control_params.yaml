@@ -1,0 +1,15 @@
+# launch.py->node->name
+control_node:
+  ros__parameters:
+    pid_ammor: [1.0, 0.0, 0.0]
+    pid_ammol: [1.0, 0.0, 0.0]
+    pid_rotor: [1.0, 0.0, 0.0]
+    ammo_goal_speed: 7000.0
+    rotor_goal_speed: 4000.0
+    enable_loader: false
+    pid_lf: [1.8, 0.00, 0.3]
+    pid_rf: [1.8, 0.00, 0.3]
+    pid_lb: [1.8, 0.00, 0.3]
+    pid_rb: [1.8, 0.00, 0.3]
+    spin_w: 3000.0
+    yaw_zero_angle: 7792.0
